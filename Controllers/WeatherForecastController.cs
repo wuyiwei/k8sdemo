@@ -104,10 +104,13 @@ namespace demo.Controllers
         public ActionResult SetReturnCode(int code)
         {
             ReturnCode = code;
-            return Ok("已设置状态码为:"+code);
+            return Ok("已设置状态码为:" + code);
         }
 
-
+        /// <summary>
+        /// 健康检查接口
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("heartbeat")]
         public ActionResult heartBeat()
         {
@@ -139,7 +142,7 @@ namespace demo.Controllers
                     msg = "Status504GatewayTimeout";
                     _logger.LogInformation(msg);
                     return Content(msg);
-               
+
                 default:
                     break;
             }
@@ -149,6 +152,40 @@ namespace demo.Controllers
             msg = DateTime.Now.ToString() + " 正常的健康检查请求:" + Guid.NewGuid().ToString();
             _logger.LogInformation(msg);
             return Ok(msg);
+        }
+
+
+        /// <summary>
+        /// 模拟消耗CPU
+        /// </summary>
+        /// <param name="threadCount"></param>
+        /// <returns></returns>
+        [HttpGet("CpuReaper")]
+        public ActionResult CpuReaper(int threadCount)
+        {
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < threadCount; i++)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    int num = 0;
+                    long start = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    while (true)
+                    {
+                        num = num + 1;
+                        if (num == int.MaxValue)
+                        {
+                            _logger.LogInformation("reset");
+                        }
+                        if (DateTimeOffset.Now.ToUnixTimeSeconds() - start > 1000)
+                        {
+                            break;
+                        }
+                    }
+                }));
+            }
+            Task.WaitAll(tasks.ToArray());
+            return Ok("CpuReaper Done");
         }
     }
 }
