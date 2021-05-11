@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -29,6 +31,7 @@ namespace demo.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
+            _logger.LogInformation("请求了 / 路径");
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
@@ -186,6 +189,16 @@ namespace demo.Controllers
             }
             Task.WaitAll(tasks.ToArray());
             return Ok("CpuReaper Done");
+        }
+
+        [HttpGet("wuyiwei")]
+        public ActionResult Wuyiwei()
+        {
+            var name = Dns.GetHostName(); // get container id
+            var ip = Dns.GetHostEntry(name).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
+            string msg = $"请求了 {Request.Scheme}://{Request.Host}{Request.Path} 这个的路径,由 {name}-{ip} 返回。";
+            _logger.LogInformation(msg);
+            return Ok(msg);
         }
     }
 }
